@@ -9,9 +9,20 @@
 // Local test:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
+const src = new URL('./entry.png', import.meta.url);
+const dst = join(outDir, 'entry.png');
+
 mkdirSync(outDir, { recursive: true });
-copyFileSync(new URL('./entry.png', import.meta.url), join(outDir, 'entry.png'));
+copyFileSync(src, dst);
+
+// Verify the copy is complete: the output must be byte-for-byte the source.
+// Fail loudly instead of handing the grader a truncated file.
+const srcSize = statSync(src).size;
+const dstSize = statSync(dst).size;
+if (srcSize !== dstSize) {
+  throw new Error(`entry.png copy incomplete: ${dstSize} of ${srcSize} bytes written`);
+}
